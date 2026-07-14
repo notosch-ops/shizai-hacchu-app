@@ -29,6 +29,8 @@ export default function PurchaseLog() {
   const [purchases, setPurchases] = useState([]);
   const [editingReceiptId, setEditingReceiptId] = useState(null);
   const [receiptInput, setReceiptInput] = useState("");
+  const [editingArrivalId, setEditingArrivalId] = useState(null);
+  const [arrivalInput, setArrivalInput] = useState("");
   const [expandedSites, setExpandedSites] = useState(() => new Set());
 
   const toggleSite = (siteName) => {
@@ -70,6 +72,17 @@ export default function PurchaseLog() {
     setReceiptInput("");
   };
 
+  const startEditArrival = (p) => {
+    setEditingArrivalId(p.id);
+    setArrivalInput(p.arrivalDate || "");
+  };
+
+  const saveArrival = async (id) => {
+    await updateDoc(doc(db, "purchases", id), { arrivalDate: arrivalInput });
+    setEditingArrivalId(null);
+    setArrivalInput("");
+  };
+
   const groups = purchases.reduce((acc, p) => {
     const key = p.siteName || "現場未設定";
     if (!acc[key]) acc[key] = [];
@@ -88,6 +101,7 @@ export default function PurchaseLog() {
       "小計",
       "使用者",
       "必要な日",
+      "到着予定日",
       "状況",
       "領収書リンク",
     ];
@@ -99,6 +113,7 @@ export default function PurchaseLog() {
       p.subtotal,
       p.memberName || "",
       p.neededBy || "",
+      p.arrivalDate || "",
       p.status || "",
       p.receiptUrl || "",
     ]);
@@ -167,6 +182,25 @@ export default function PurchaseLog() {
                         {p.neededBy && <>必要な日: {p.neededBy}</>}
                       </div>
                     )}
+                    {editingArrivalId === p.id ? (
+                      <div className="receipt-edit">
+                        <input
+                          type="date"
+                          value={arrivalInput}
+                          onChange={(e) => setArrivalInput(e.target.value)}
+                        />
+                        <button className="ghost" onClick={() => saveArrival(p.id)}>
+                          保存
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="card-sub arrival-row">
+                        到着予定日: {p.arrivalDate || "未設定"}
+                        <button className="link-btn" onClick={() => startEditArrival(p)}>
+                          変更
+                        </button>
+                      </div>
+                    )}
                     {editingReceiptId === p.id ? (
                       <div className="receipt-edit">
                         <input
@@ -225,6 +259,7 @@ export default function PurchaseLog() {
               <th>小計</th>
               <th>使用者</th>
               <th>必要な日</th>
+              <th>到着予定日</th>
               <th>状況</th>
             </tr>
           </thead>
@@ -238,13 +273,14 @@ export default function PurchaseLog() {
                 <td>{p.subtotal.toLocaleString()}円</td>
                 <td>{p.memberName || ""}</td>
                 <td>{p.neededBy || ""}</td>
+                <td>{p.arrivalDate || ""}</td>
                 <td>{p.status}</td>
               </tr>
             ))}
             <tr>
               <td colSpan={4}>合計</td>
               <td>{grandTotal.toLocaleString()}円</td>
-              <td colSpan={3}></td>
+              <td colSpan={4}></td>
             </tr>
           </tbody>
         </table>

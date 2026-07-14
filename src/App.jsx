@@ -18,7 +18,7 @@ function App() {
   return (
     <div className="app">
       <header className="app-header">
-        <h1>現場資材発注アプリ</h1>
+        <h1>ネット関係発注アプリ</h1>
       </header>
 
       <nav className="tabs">

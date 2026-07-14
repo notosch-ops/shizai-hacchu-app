@@ -240,6 +240,21 @@
   background: #2e9e5b;
 }
 
+.arrival-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.link-btn {
+  border: none;
+  background: transparent;
+  color: var(--accent);
+  font-size: 12px;
+  padding: 0;
+  cursor: pointer;
+}
+
 .file-btn {
   font-size: 13px;
   padding: 8px 10px;
