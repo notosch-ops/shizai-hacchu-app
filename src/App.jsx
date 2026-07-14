@@ -7,6 +7,7 @@ import "./App.css";
 const TABS = [
   { key: "purchases", label: "購入記録" },
   { key: "products", label: "商品リスト" },
+  { key: "categories", label: "カテゴリ" },
   { key: "sites", label: "現場リスト" },
   { key: "members", label: "使用者リスト" },
 ];
@@ -35,6 +36,13 @@ function App() {
       <main className="app-main">
         {tab === "purchases" && <PurchaseLog />}
         {tab === "products" && <ProductList />}
+        {tab === "categories" && (
+          <SiteList
+            collectionName="categories"
+            placeholder="カテゴリ名"
+            emptyLabel="カテゴリがまだ登録されていません"
+          />
+        )}
         {tab === "sites" && <SiteList sortByLeadingNumber />}
         {tab === "members" && (
           <SiteList

@@ -28,10 +28,19 @@ export default function ProductList() {
   const [editCategory, setEditCategory] = useState("");
   const [expandedCategories, setExpandedCategories] = useState(() => new Set());
 
+  const [categories, setCategories] = useState([]);
+
   useEffect(() => {
     const q = query(collection(db, "products"), orderBy("createdAt", "desc"));
     return onSnapshot(q, (snap) => {
       setProducts(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+    });
+  }, []);
+
+  useEffect(() => {
+    const q = query(collection(db, "categories"), orderBy("createdAt", "desc"));
+    return onSnapshot(q, (snap) => {
+      setCategories(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
     });
   }, []);
 
@@ -118,11 +127,17 @@ export default function ProductList() {
             value={editUnitPrice}
             onChange={(e) => setEditUnitPrice(e.target.value)}
           />
-          <input
-            placeholder="カテゴリ（任意）"
+          <select
             value={editCategory}
             onChange={(e) => setEditCategory(e.target.value)}
-          />
+          >
+            <option value="">未分類</option>
+            {categories.map((c) => (
+              <option key={c.id} value={c.name}>
+                {c.name}
+              </option>
+            ))}
+          </select>
           <button className="primary" onClick={() => saveEdit(p.id)}>
             保存
           </button>
@@ -179,11 +194,14 @@ export default function ProductList() {
           value={unitPrice}
           onChange={(e) => setUnitPrice(e.target.value)}
         />
-        <input
-          placeholder="カテゴリ（任意）"
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-        />
+        <select value={category} onChange={(e) => setCategory(e.target.value)}>
+          <option value="">未分類</option>
+          {categories.map((c) => (
+            <option key={c.id} value={c.name}>
+              {c.name}
+            </option>
+          ))}
+        </select>
         <button type="submit">追加</button>
       </form>
 
