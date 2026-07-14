@@ -35,7 +35,7 @@ function App() {
       <main className="app-main">
         {tab === "purchases" && <PurchaseLog />}
         {tab === "products" && <ProductList />}
-        {tab === "sites" && <SiteList />}
+        {tab === "sites" && <SiteList sortByLeadingNumber />}
         {tab === "members" && (
           <SiteList
             collectionName="members"

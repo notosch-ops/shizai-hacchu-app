@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   addDoc,
   collection,
@@ -11,10 +11,16 @@ import {
 } from "firebase/firestore";
 import { db } from "../firebase";
 
+const leadingNumber = (name) => {
+  const match = String(name).match(/^\s*(\d+)/);
+  return match ? Number(match[1]) : null;
+};
+
 export default function SiteList({
   collectionName = "sites",
   placeholder = "現場名",
   emptyLabel = "現場がまだありません",
+  sortByLeadingNumber = false,
 }) {
   const [items, setItems] = useState([]);
   const [name, setName] = useState("");
@@ -27,6 +33,18 @@ export default function SiteList({
       setItems(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
     });
   }, [collectionName]);
+
+  const sortedItems = useMemo(() => {
+    if (!sortByLeadingNumber) return items;
+    return [...items].sort((a, b) => {
+      const na = leadingNumber(a.name);
+      const nb = leadingNumber(b.name);
+      if (na === null && nb === null) return 0;
+      if (na === null) return 1;
+      if (nb === null) return -1;
+      return na - nb;
+    });
+  }, [items, sortByLeadingNumber]);
 
   const handleAdd = async (e) => {
     e.preventDefault();
@@ -69,7 +87,7 @@ export default function SiteList({
       </form>
 
       <ul className="card-list">
-        {items.map((s) =>
+        {sortedItems.map((s) =>
           editingId === s.id ? (
             <li key={s.id} className="card">
               <div className="inline-form edit-form">
