@@ -21,6 +21,19 @@ export default function PurchaseLog() {
   const [purchases, setPurchases] = useState([]);
   const [editingReceiptId, setEditingReceiptId] = useState(null);
   const [receiptInput, setReceiptInput] = useState("");
+  const [expandedSites, setExpandedSites] = useState(() => new Set());
+
+  const toggleSite = (siteName) => {
+    setExpandedSites((prev) => {
+      const next = new Set(prev);
+      if (next.has(siteName)) {
+        next.delete(siteName);
+      } else {
+        next.add(siteName);
+      }
+      return next;
+    });
+  };
 
   useEffect(() => {
     const q = query(collection(db, "purchases"), orderBy("createdAt", "desc"));
@@ -64,12 +77,20 @@ export default function PurchaseLog() {
 
       {Object.entries(groups).map(([siteName, items]) => {
         const total = items.reduce((sum, i) => sum + (i.subtotal || 0), 0);
+        const isOpen = expandedSites.has(siteName);
         return (
           <section key={siteName} className="site-group">
-            <div className="site-group-header">
+            <button
+              type="button"
+              className="site-group-header"
+              onClick={() => toggleSite(siteName)}
+            >
+              <span className={isOpen ? "site-caret open" : "site-caret"}>▶</span>
               <h2>{siteName}</h2>
+              <span className="site-count">{items.length}件</span>
               <span className="site-total">合計 {total.toLocaleString()}円</span>
-            </div>
+            </button>
+            {isOpen && (
             <ul className="card-list">
               {items.map((p) => (
                 <li key={p.id} className="card purchase-card">
@@ -128,6 +149,7 @@ export default function PurchaseLog() {
                 </li>
               ))}
             </ul>
+            )}
           </section>
         );
       })}

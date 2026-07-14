@@ -7,6 +7,7 @@ import {
   onSnapshot,
   orderBy,
   query,
+  updateDoc,
 } from "firebase/firestore";
 import { db } from "../firebase";
 
@@ -17,6 +18,8 @@ export default function SiteList({
 }) {
   const [items, setItems] = useState([]);
   const [name, setName] = useState("");
+  const [editingId, setEditingId] = useState(null);
+  const [editName, setEditName] = useState("");
 
   useEffect(() => {
     const q = query(collection(db, collectionName), orderBy("createdAt", "desc"));
@@ -40,6 +43,19 @@ export default function SiteList({
     await deleteDoc(doc(db, collectionName, id));
   };
 
+  const startEdit = (item) => {
+    setEditingId(item.id);
+    setEditName(item.name);
+  };
+
+  const cancelEdit = () => setEditingId(null);
+
+  const saveEdit = async (id) => {
+    if (!editName.trim()) return;
+    await updateDoc(doc(db, collectionName, id), { name: editName.trim() });
+    setEditingId(null);
+  };
+
   return (
     <div className="panel">
       <form className="inline-form" onSubmit={handleAdd}>
@@ -53,18 +69,39 @@ export default function SiteList({
       </form>
 
       <ul className="card-list">
-        {items.map((s) => (
-          <li key={s.id} className="card">
-            <div className="card-main">
-              <div className="card-title">{s.name}</div>
-            </div>
-            <div className="card-actions">
-              <button className="ghost" onClick={() => handleDelete(s.id)}>
-                削除
-              </button>
-            </div>
-          </li>
-        ))}
+        {items.map((s) =>
+          editingId === s.id ? (
+            <li key={s.id} className="card">
+              <div className="inline-form edit-form">
+                <input
+                  placeholder={placeholder}
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                />
+                <button className="primary" onClick={() => saveEdit(s.id)}>
+                  保存
+                </button>
+                <button className="ghost" onClick={cancelEdit}>
+                  キャンセル
+                </button>
+              </div>
+            </li>
+          ) : (
+            <li key={s.id} className="card">
+              <div className="card-main">
+                <div className="card-title">{s.name}</div>
+              </div>
+              <div className="card-actions">
+                <button className="ghost" onClick={() => startEdit(s)}>
+                  編集
+                </button>
+                <button className="ghost" onClick={() => handleDelete(s.id)}>
+                  削除
+                </button>
+              </div>
+            </li>
+          )
+        )}
         {items.length === 0 && <li className="empty">{emptyLabel}</li>}
       </ul>
     </div>
