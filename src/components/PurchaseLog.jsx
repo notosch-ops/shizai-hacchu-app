@@ -8,8 +8,7 @@ import {
   query,
   updateDoc,
 } from "firebase/firestore";
-import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
-import { db, storage } from "../firebase";
+import { db } from "../firebase";
 
 const STATUSES = ["確認中", "出荷中", "納品済み"];
 const STATUS_CLASS = {
@@ -20,7 +19,8 @@ const STATUS_CLASS = {
 
 export default function PurchaseLog() {
   const [purchases, setPurchases] = useState([]);
-  const [uploadingId, setUploadingId] = useState(null);
+  const [editingReceiptId, setEditingReceiptId] = useState(null);
+  const [receiptInput, setReceiptInput] = useState("");
 
   useEffect(() => {
     const q = query(collection(db, "purchases"), orderBy("createdAt", "desc"));
@@ -38,18 +38,15 @@ export default function PurchaseLog() {
     await deleteDoc(doc(db, "purchases", id));
   };
 
-  const handleFile = async (id, file) => {
-    if (!file) return;
-    setUploadingId(id);
-    try {
-      const path = `receipts/${id}/${Date.now()}_${file.name}`;
-      const fileRef = ref(storage, path);
-      await uploadBytes(fileRef, file);
-      const url = await getDownloadURL(fileRef);
-      await updateDoc(doc(db, "purchases", id), { receiptUrl: url });
-    } finally {
-      setUploadingId(null);
-    }
+  const startEditReceipt = (p) => {
+    setEditingReceiptId(p.id);
+    setReceiptInput(p.receiptUrl || "");
+  };
+
+  const saveReceipt = async (id) => {
+    await updateDoc(doc(db, "purchases", id), { receiptUrl: receiptInput.trim() });
+    setEditingReceiptId(null);
+    setReceiptInput("");
   };
 
   const groups = purchases.reduce((acc, p) => {
@@ -84,11 +81,22 @@ export default function PurchaseLog() {
                       単価 {p.unitPrice.toLocaleString()}円 / 小計{" "}
                       {p.subtotal.toLocaleString()}円
                     </div>
-                    {p.receiptUrl && (
+                    {editingReceiptId === p.id ? (
+                      <div className="receipt-edit">
+                        <input
+                          placeholder="領収書のリンク（Googleドライブなど）"
+                          value={receiptInput}
+                          onChange={(e) => setReceiptInput(e.target.value)}
+                        />
+                        <button className="ghost" onClick={() => saveReceipt(p.id)}>
+                          保存
+                        </button>
+                      </div>
+                    ) : p.receiptUrl ? (
                       <a href={p.receiptUrl} target="_blank" rel="noreferrer" className="receipt-link">
                         領収書を見る
                       </a>
-                    )}
+                    ) : null}
                   </div>
                   <div className="card-actions purchase-actions">
                     <select
@@ -102,15 +110,11 @@ export default function PurchaseLog() {
                         </option>
                       ))}
                     </select>
-                    <label className="file-btn">
-                      {uploadingId === p.id ? "アップロード中..." : "ファイル追加"}
-                      <input
-                        type="file"
-                        accept="image/*,application/pdf"
-                        onChange={(e) => handleFile(p.id, e.target.files[0])}
-                        disabled={uploadingId === p.id}
-                      />
-                    </label>
+                    {editingReceiptId !== p.id && (
+                      <button className="file-btn" onClick={() => startEditReceipt(p)}>
+                        領収書リンク
+                      </button>
+                    )}
                     <button className="ghost" onClick={() => handleDelete(p.id)}>
                       削除
                     </button>

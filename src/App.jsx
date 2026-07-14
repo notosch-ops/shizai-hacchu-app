@@ -1,5 +1,4 @@
-import { useEffect, useState } from "react";
-import { ensureSignedIn } from "./firebase";
+import { useState } from "react";
 import ProductList from "./components/ProductList";
 import SiteList from "./components/SiteList";
 import PurchaseLog from "./components/PurchaseLog";
@@ -13,20 +12,6 @@ const TABS = [
 
 function App() {
   const [tab, setTab] = useState("purchases");
-  const [ready, setReady] = useState(false);
-
-  useEffect(() => {
-    ensureSignedIn()
-      .then(() => setReady(true))
-      .catch((err) => {
-        console.error(err);
-        setReady(true);
-      });
-  }, []);
-
-  if (!ready) {
-    return <div className="loading">読み込み中...</div>;
-  }
 
   return (
     <div className="app">
