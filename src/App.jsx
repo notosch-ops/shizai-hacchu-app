@@ -8,6 +8,7 @@ const TABS = [
   { key: "purchases", label: "購入記録" },
   { key: "products", label: "商品リスト" },
   { key: "sites", label: "現場リスト" },
+  { key: "members", label: "使用者リスト" },
 ];
 
 function App() {
@@ -35,6 +36,13 @@ function App() {
         {tab === "purchases" && <PurchaseLog />}
         {tab === "products" && <ProductList />}
         {tab === "sites" && <SiteList />}
+        {tab === "members" && (
+          <SiteList
+            collectionName="members"
+            placeholder="使用者名"
+            emptyLabel="使用者がまだ登録されていません"
+          />
+        )}
       </main>
     </div>
   );

@@ -10,21 +10,25 @@ import {
 } from "firebase/firestore";
 import { db } from "../firebase";
 
-export default function SiteList() {
-  const [sites, setSites] = useState([]);
+export default function SiteList({
+  collectionName = "sites",
+  placeholder = "現場名",
+  emptyLabel = "現場がまだありません",
+}) {
+  const [items, setItems] = useState([]);
   const [name, setName] = useState("");
 
   useEffect(() => {
-    const q = query(collection(db, "sites"), orderBy("createdAt", "desc"));
+    const q = query(collection(db, collectionName), orderBy("createdAt", "desc"));
     return onSnapshot(q, (snap) => {
-      setSites(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+      setItems(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
     });
-  }, []);
+  }, [collectionName]);
 
   const handleAdd = async (e) => {
     e.preventDefault();
     if (!name.trim()) return;
-    await addDoc(collection(db, "sites"), {
+    await addDoc(collection(db, collectionName), {
       name: name.trim(),
       createdAt: Date.now(),
     });
@@ -32,15 +36,15 @@ export default function SiteList() {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm("この現場を削除しますか？")) return;
-    await deleteDoc(doc(db, "sites", id));
+    if (!confirm("削除しますか？")) return;
+    await deleteDoc(doc(db, collectionName, id));
   };
 
   return (
     <div className="panel">
       <form className="inline-form" onSubmit={handleAdd}>
         <input
-          placeholder="現場名"
+          placeholder={placeholder}
           value={name}
           onChange={(e) => setName(e.target.value)}
           required
@@ -49,7 +53,7 @@ export default function SiteList() {
       </form>
 
       <ul className="card-list">
-        {sites.map((s) => (
+        {items.map((s) => (
           <li key={s.id} className="card">
             <div className="card-main">
               <div className="card-title">{s.name}</div>
@@ -61,7 +65,7 @@ export default function SiteList() {
             </div>
           </li>
         ))}
-        {sites.length === 0 && <li className="empty">現場がまだありません</li>}
+        {items.length === 0 && <li className="empty">{emptyLabel}</li>}
       </ul>
     </div>
   );

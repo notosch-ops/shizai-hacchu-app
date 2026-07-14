@@ -4,15 +4,27 @@ import { db } from "../firebase";
 
 export default function PurchaseForm({ product, onClose }) {
   const [sites, setSites] = useState([]);
+  const [members, setMembers] = useState([]);
   const [siteId, setSiteId] = useState("");
+  const [memberId, setMemberId] = useState("");
   const [quantity, setQuantity] = useState(1);
+  const [neededByMode, setNeededByMode] = useState("asap");
+  const [neededByDate, setNeededByDate] = useState("");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    const q = query(collection(db, "sites"), orderBy("createdAt", "desc"));
-    return onSnapshot(q, (snap) => {
+    const qSites = query(collection(db, "sites"), orderBy("createdAt", "desc"));
+    const unsubSites = onSnapshot(qSites, (snap) => {
       setSites(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
     });
+    const qMembers = query(collection(db, "members"), orderBy("createdAt", "desc"));
+    const unsubMembers = onSnapshot(qMembers, (snap) => {
+      setMembers(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+    });
+    return () => {
+      unsubSites();
+      unsubMembers();
+    };
   }, []);
 
   const handleSubmit = async (e) => {
@@ -20,6 +32,15 @@ export default function PurchaseForm({ product, onClose }) {
     const site = sites.find((s) => s.id === siteId);
     if (!site) {
       alert("現場を選んでください");
+      return;
+    }
+    const member = members.find((m) => m.id === memberId);
+    if (!member) {
+      alert("使用者を選んでください");
+      return;
+    }
+    if (neededByMode === "date" && !neededByDate) {
+      alert("必要な日を選んでください");
       return;
     }
     setSaving(true);
@@ -30,10 +51,13 @@ export default function PurchaseForm({ product, onClose }) {
       unitPrice: product.unitPrice,
       siteId: site.id,
       siteName: site.name,
+      memberId: member.id,
+      memberName: member.name,
       quantity: qty,
       subtotal: qty * product.unitPrice,
       status: "確認中",
       receiptUrl: "",
+      neededBy: neededByMode === "asap" ? "最短で" : neededByDate,
       createdAt: Date.now(),
     });
     setSaving(false);
@@ -59,6 +83,24 @@ export default function PurchaseForm({ product, onClose }) {
             </select>
           </label>
           <label>
+            使用者を選ぶ
+            <select value={memberId} onChange={(e) => setMemberId(e.target.value)} required>
+              <option value="" disabled>
+                選択してください
+              </option>
+              {members.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.name}
+                </option>
+              ))}
+            </select>
+            {members.length === 0 && (
+              <span className="field-hint">
+                「使用者リスト」タブで先に登録してください
+              </span>
+            )}
+          </label>
+          <label>
             数量
             <input
               type="number"
@@ -67,6 +109,26 @@ export default function PurchaseForm({ product, onClose }) {
               onChange={(e) => setQuantity(e.target.value)}
               required
             />
+          </label>
+          <label>
+            必要な日
+            <div className="needed-by-row">
+              <select
+                value={neededByMode}
+                onChange={(e) => setNeededByMode(e.target.value)}
+              >
+                <option value="asap">最短で</option>
+                <option value="date">日付を指定</option>
+              </select>
+              {neededByMode === "date" && (
+                <input
+                  type="date"
+                  value={neededByDate}
+                  onChange={(e) => setNeededByDate(e.target.value)}
+                  required
+                />
+              )}
+            </div>
           </label>
           <div className="modal-actions">
             <button type="button" className="ghost" onClick={onClose}>

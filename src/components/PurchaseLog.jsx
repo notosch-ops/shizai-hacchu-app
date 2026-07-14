@@ -81,6 +81,12 @@ export default function PurchaseLog() {
                       単価 {p.unitPrice.toLocaleString()}円 / 小計{" "}
                       {p.subtotal.toLocaleString()}円
                     </div>
+                    {(p.memberName || p.neededBy) && (
+                      <div className="card-sub">
+                        {p.memberName && <>使用者: {p.memberName}　</>}
+                        {p.neededBy && <>必要な日: {p.neededBy}</>}
+                      </div>
+                    )}
                     {editingReceiptId === p.id ? (
                       <div className="receipt-edit">
                         <input
